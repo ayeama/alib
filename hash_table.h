@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-typedef struct {} a_hash_table_t;
+typedef struct a_hash_table_t a_hash_table_t;
 
 a_hash_table_t* a_hash_table_create();
 
