@@ -38,6 +38,10 @@ a_hash_table_t* a_hash_table_create() {
 }
 
 void a_hash_table_free(a_hash_table_t* t) {
+    if (t == NULL) {
+        return;
+    }
+
     for (size_t i = 0; i < t->cap; i++) {
         free((void*)t->entries[i].key);
     }
@@ -54,16 +58,71 @@ void* a_hash_table_get(a_hash_table_t* t, const char* k) {
         return NULL;
     }
 
-    if (strcmp(t->entries[i].key, k) == 0) {
-        return t->entries[i].value;
+    size_t c = 0;
+    while (c < (t->cap)) {
+        // TODO bug?
+        if (t->entries[i].key == NULL) {
+            return NULL;
+        }
+
+        if (strcmp(t->entries[i].key, k) == 0) {
+            return t->entries[i].value;
+        }
+
+        if (i < (t->cap - 1)) {
+            i++;
+        } else {
+            i = 0;
+        }
+
+        c++;
     }
-    return NULL;  // TODO
+
+    return NULL;
 }
 
 void* a_hash_table_set(a_hash_table_t* t, const char* k, void* v) {
-    // TODO check cap
-    if (t->cap < ((t->len) / 2)) {
-        printf("extend hash table\n");
+    if (t->len > (t->cap / 2)) {
+        hash_table_entry* nentries =
+            calloc(t->cap * 2, sizeof(hash_table_entry));
+        if (nentries == NULL) {
+            return NULL;  // TODO
+        }
+
+        for (size_t i = 0; i < t->cap; i++) {
+            if (t->entries[i].key == NULL) {
+                continue;
+            }
+
+            uint64_t h = a_hash_fnv1a_64(k, sizeof(uint64_t));
+            size_t j = h % (t->cap * 2);
+
+            if (nentries[j].key == NULL) {
+                nentries[j].key = t->entries[i].key;
+                nentries[j].value = t->entries[i].value;
+            } else {
+                size_t c = 0;
+                while (c < (t->cap * 2)) {
+                    if (nentries[j].key == NULL) {
+                        nentries[j].key = t->entries[i].key;
+                        nentries[j].value = t->entries[i].value;
+                        break;
+                    }
+
+                    if (j < ((t->cap * 2) - 1)) {
+                        j++;
+                    } else {
+                        j = 0;
+                    }
+
+                    c++;
+                }
+            }
+        }
+
+        free(t->entries);
+        t->cap = t->cap * 2;
+        t->entries = nentries;
     }
 
     uint64_t h = a_hash_fnv1a_64(k, sizeof(uint64_t));
@@ -79,13 +138,37 @@ void* a_hash_table_set(a_hash_table_t* t, const char* k, void* v) {
         t->entries[i].key = (const char*)key;
         t->entries[i].value = v;
     } else {
-        if (strcmp(t->entries[i].key, k) == 0) {
-            t->entries[i].value = v;
-        } else {
-            // TODO handle collisions
-            printf("hash table collision\n");
+        size_t c = 0;
+        while (c < (t->cap)) {
+            if (t->entries[i].key == NULL) {
+                char* key = a_strdup(k);
+                if (key == NULL) {
+                    return NULL;
+                }
+
+                t->len += 1;
+                t->entries[i].key = (const char*)key;
+                t->entries[i].value = v;
+                return t->entries[i].value;
+            }
+
+            if (strcmp(t->entries[i].key, k) == 0) {
+                t->entries[i].value = v;
+                return t->entries[i].value;
+            }
+
+            if (i < (t->cap - 1)) {
+                i++;
+            } else {
+                i = 0;
+            }
+
+            c++;
         }
+
+        return NULL;
     }
+
     return t->entries[i].value;
 }
 
@@ -96,6 +179,6 @@ void a_hash_table_dump(a_hash_table_t* t) {
     for (size_t i = 0; i < t->cap; i++) {
         const char* k = t->entries[i].key;
         void* v = t->entries[i].value;
-        printf("%10ld\t%10p\t%10p\n", i, k, v);
+        printf("%14ld\t%14p\t%14p\n", i, k, v);
     }
 }
