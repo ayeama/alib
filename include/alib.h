@@ -6,5 +6,6 @@
 #include "hash_table.h"
 #include "http.h"
 #include "log.h"
+#include "trie.h"
 
 #endif  // A_LIB_H
