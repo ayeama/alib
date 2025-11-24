@@ -10,17 +10,17 @@
 
 void _handle_connection(a_http_server_t *server, int socket) {
     printf("_handle_connection\n");
-    chttp_request_t r = {};
+    a_http_request_t r = {};
 
-    void (*func)(chttp_request_t *r) =
-        (void (*)(chttp_request_t *r))a_hash_table_get(server->handler->funcs,
+    a_http_handler_func_t func =
+        (void (*)(a_http_request_t *r))a_hash_table_get(server->handler->funcs,
                                                        "GET /users");
     func(&r);
     // server->handler->funcs(&r);
 }
 
 void a_http_handle_func(a_http_handler_t *handler, const char *pattern,
-                        void (*func)(chttp_request_t *r)) {
+                        a_http_handler_func_t func) {
     if (handler->funcs == NULL) {
         handler->funcs = a_hash_table_create();  // TODO handle free
     }

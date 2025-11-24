@@ -7,19 +7,21 @@ typedef struct {
     const char *method;
     const char *request_uri;
     const char *http_version;
-} chttp_request_t;
+} a_http_request_t;
 
 typedef struct {
-} chttp_response_t;
+} a_http_response_t;
+
+typedef void (*a_http_handler_func_t)(a_http_request_t *r);
 
 typedef struct {
     // TODO use a hash table/decision tree
-    // void (*func)(chttp_request_t *r);
+    // void (*func)(a_http_request_t *r);
     a_hash_table_t *funcs;
 } a_http_handler_t;
 
 void a_http_handle_func(a_http_handler_t *handler, const char *pattern,
-                        void (*func)(chttp_request_t *r));
+                        a_http_handler_func_t func);
 
 typedef struct {
     // TODO merge host and port into address
