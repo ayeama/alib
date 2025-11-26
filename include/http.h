@@ -1,8 +1,6 @@
 #ifndef A_HTTP_H
 #define A_HTTP_H
 
-#include "hash_table.h"
-
 typedef struct {
     const char *method;
     const char *request_uri;
@@ -17,7 +15,7 @@ typedef void (*a_http_handler_func_t)(a_http_request_t *r);
 typedef struct {
     // TODO use a hash table/decision tree
     // void (*func)(a_http_request_t *r);
-    a_hash_table_t *funcs;
+    void *funcs; // void* = radix_node*
 } a_http_handler_t;
 
 void a_http_handle_func(a_http_handler_t *handler, const char *pattern,
