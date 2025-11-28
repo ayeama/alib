@@ -1,4 +1,3 @@
-#include "astring.h"
 #include "http.h"
 
 #include <arpa/inet.h>
@@ -6,17 +5,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include "astring.h"
 
 #define RADIX_EDGE_LIST_CAP 4
 
 typedef struct radix_edge_list_item radix_edge_list_item;
 typedef struct radix_edge_list radix_edge_list;
 typedef struct radix_node radix_node;
-radix_node* radix_create();
+radix_node *radix_create();
 void radix_free(radix_node *root);
 bool radix_insert(radix_node *root, const char *text);
 bool radix_search(radix_node *root, const char *text);
@@ -32,7 +32,8 @@ typedef struct radix_edge_list {
     size_t cap;
 } radix_edge_list;
 
-static radix_edge_list_item* radix_edge_list_get(radix_edge_list *list, char first) {
+static radix_edge_list_item *radix_edge_list_get(radix_edge_list *list,
+                                                 char first) {
     for (size_t i = 0; i < list->len; i++) {
         if (list->items[i].label[0] == first) {
             return &list->items[i];
@@ -41,10 +42,12 @@ static radix_edge_list_item* radix_edge_list_get(radix_edge_list *list, char fir
     return NULL;
 }
 
-static bool radix_edge_list_add(radix_edge_list *list, const char *label, void *node) {
+static bool radix_edge_list_add(radix_edge_list *list, const char *label,
+                                void *node) {
     if (list->len == list->cap) {
         size_t ncap = list->cap ? list->cap * 2 : RADIX_EDGE_LIST_CAP;
-        radix_edge_list_item *nitems = realloc(list->items, (sizeof *nitems) * ncap);
+        radix_edge_list_item *nitems =
+            realloc(list->items, (sizeof *nitems) * ncap);
         if (nitems == NULL) {
             return false;
         }
@@ -78,7 +81,7 @@ typedef struct radix_node {
     bool terminal;
 } radix_node;
 
-radix_node* radix_create() {
+radix_node *radix_create() {
     radix_node *root = calloc(1, sizeof *root);
     if (root == NULL) {
         // TODO
@@ -92,7 +95,7 @@ void radix_free(radix_node *root) {
     if (root == NULL) {
         return;
     }
-    
+
     for (size_t i = 0; i < root->edges.len; i++) {
         radix_node *child = root->edges.items[i].node;
         radix_free(child);
@@ -160,7 +163,7 @@ bool radix_search(radix_node *root, const char *text) {
     radix_node *cur = root;
     const char *key = text;
 
-    while(*key) {
+    while (*key) {
         radix_edge_list_item *edge = radix_edge_list_get(&cur->edges, *key);
         if (edge == NULL) {
             return false;
@@ -189,12 +192,14 @@ void _handle_connection(a_http_server_t *server, int socket) {
     a_http_request_t r = {};
 
     // a_http_handler_func_t func =
-    //     (void (*)(a_http_request_t *r))a_hash_table_get(server->handler->funcs,
+    //     (void (*)(a_http_request_t
+    //     *r))a_hash_table_get(server->handler->funcs,
     //                                                    "GET /users");
     // func(&r);
     // // server->handler->funcs(&r);
 
-    bool result = radix_search((radix_node*)server->handler->funcs, "GET /users");
+    bool result =
+        radix_search((radix_node *)server->handler->funcs, "GET /users");
     printf("pattern match result: %d\n", result);
 }
 
@@ -203,7 +208,7 @@ void a_http_handle_func(a_http_handler_t *handler, const char *pattern,
     if (handler->funcs == NULL) {
         handler->funcs = radix_create();  // TODO handle free
     }
-    radix_insert(handler->funcs, pattern); // TODO insert value as well
+    radix_insert(handler->funcs, pattern);  // TODO insert value as well
     // a_hash_table_set(handler->funcs, pattern, func);
 }
 

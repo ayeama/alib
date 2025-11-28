@@ -175,7 +175,8 @@ void* a_hash_table_set(a_hash_table_t* t, const char* k, void* v) {
 size_t a_hash_table_len(a_hash_table_t* t) { return t->len; }
 
 void a_hash_table_dump(a_hash_table_t* t) {
-    printf("capacity: %d\nlength: %d\nload factor: %.2f\n", t->cap, t->len, ((float)t->len / (float)t->cap));
+    printf("capacity: %d\nlength: %d\nload factor: %.2f\n", t->cap, t->len,
+           ((float)t->len / (float)t->cap));
     printf("index     \tkey       \tvalue\n");
     for (size_t i = 0; i < t->cap; i++) {
         const char* k = t->entries[i].key;

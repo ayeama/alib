@@ -1,6 +1,7 @@
 #ifndef A_LIB_H
 #define A_LIB_H
 
+#include "array.h"
 #include "astring.h"
 #include "hash.h"
 #include "hash_table.h"

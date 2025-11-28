@@ -9,8 +9,8 @@ char* a_strdup(const char* s) {
     return strcpy(d, s);
 }
 
-char *a_strndup(const char *s, size_t n) {
-    char *d = malloc(sizeof(char) * (n + 1));
+char* a_strndup(const char* s, size_t n) {
+    char* d = malloc(sizeof(char) * (n + 1));
     if (d == NULL) {
         return NULL;
     }
