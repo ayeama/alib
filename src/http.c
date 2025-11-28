@@ -18,8 +18,8 @@ typedef struct radix_edge_list radix_edge_list;
 typedef struct radix_node radix_node;
 radix_node *radix_create();
 void radix_free(radix_node *root);
-bool radix_insert(radix_node *root, const char *text);
-bool radix_search(radix_node *root, const char *text);
+void radix_insert(radix_node *root, const char *text, void *value);
+void *radix_search(radix_node *root, const char *text);
 
 typedef struct radix_edge_list_item {
     char *label;
@@ -79,6 +79,7 @@ static void radix_edge_list_free(radix_edge_list *list) {
 typedef struct radix_node {
     radix_edge_list edges;
     bool terminal;
+    void *value;
 } radix_node;
 
 radix_node *radix_create() {
@@ -106,7 +107,7 @@ void radix_free(radix_node *root) {
     free(root);
 }
 
-bool radix_insert(radix_node *root, const char *text) {
+void radix_insert(radix_node *root, const char *text, void *value) {
     radix_node *cur = root;
     const char *key = text;
 
@@ -115,13 +116,14 @@ bool radix_insert(radix_node *root, const char *text) {
         if (edge == NULL) {
             radix_node *nnode = calloc(1, sizeof *nnode);
             if (nnode == NULL) {
-                return false;
+                return;
             }
             nnode->terminal = true;
+            nnode->value = value;
             if (!radix_edge_list_add(&cur->edges, key, nnode)) {
-                return false;
+                return;
             }
-            return true;
+            return;
         }
 
         char *label = edge->label;
@@ -139,7 +141,7 @@ bool radix_insert(radix_node *root, const char *text) {
 
         radix_node *snode = calloc(1, sizeof *snode);
         if (snode == NULL) {
-            return false;
+            return;
         }
 
         radix_node *ochild = edge->node;
@@ -152,14 +154,13 @@ bool radix_insert(radix_node *root, const char *text) {
         free(edge->label);
         edge->label = a_strndup(label, i);
         edge->node = snode;
-        return true;
+        return;
     }
 
     cur->terminal = true;
-    return true;
 }
 
-bool radix_search(radix_node *root, const char *text) {
+void *radix_search(radix_node *root, const char *text) {
     radix_node *cur = root;
     const char *key = text;
 
@@ -184,23 +185,17 @@ bool radix_search(radix_node *root, const char *text) {
         cur = edge->node;
     }
 
-    return cur->terminal;
+    return cur->value;
 }
 
 void _handle_connection(a_http_server_t *server, int socket) {
     printf("_handle_connection\n");
     a_http_request_t r = {};
 
-    // a_http_handler_func_t func =
-    //     (void (*)(a_http_request_t
-    //     *r))a_hash_table_get(server->handler->funcs,
-    //                                                    "GET /users");
-    // func(&r);
-    // // server->handler->funcs(&r);
-
-    bool result =
+    void *result =
         radix_search((radix_node *)server->handler->funcs, "GET /users");
-    printf("pattern match result: %d\n", result);
+    a_http_handler_func_t func = (a_http_handler_func_t)result;
+    func(&r);
 }
 
 void a_http_handle_func(a_http_handler_t *handler, const char *pattern,
@@ -208,8 +203,7 @@ void a_http_handle_func(a_http_handler_t *handler, const char *pattern,
     if (handler->funcs == NULL) {
         handler->funcs = radix_create();  // TODO handle free
     }
-    radix_insert(handler->funcs, pattern);  // TODO insert value as well
-    // a_hash_table_set(handler->funcs, pattern, func);
+    radix_insert(handler->funcs, pattern, func);
 }
 
 void a_http_serve(a_http_server_t *server) {
