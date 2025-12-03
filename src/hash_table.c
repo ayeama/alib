@@ -184,3 +184,26 @@ void a_hash_table_dump(a_hash_table_t* t) {
         printf("%14ld\t%14p\t%14p\n", i, k, v);
     }
 }
+
+a_hash_table_iter_t a_hash_table_iter(a_hash_table_t* t) {
+    a_hash_table_iter_t i;
+    i._t = t;
+    i._index = 0;
+    return i;
+}
+
+bool a_hash_table_iter_next(a_hash_table_iter_t* i) {
+    a_hash_table_t* t = i->_t;
+    while (i->_index < t->cap) {
+        size_t j = i->_index;
+        i->_index++;
+
+        if (t->entries[j].key != NULL) {
+            hash_table_entry e = t->entries[j];
+            i->key = e.key;
+            i->value = e.value;
+            return true;
+        }
+    }
+    return false;
+}
